@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def GetData(path):
-    """Recuppere les data du csv et forme une lsite de couple (int,int)"""
+    """ Recuppere les data du csv et forme une liste de couple (int,int) """
     dataConvert = []
     with open(path, 'r') as f:
         reader = csv.reader(f)
@@ -14,6 +14,7 @@ def GetData(path):
     return dataConvert
 
 def GetAxes(data):
+    """ Split la liste en deux axes x et y pour le display """
     x = []
     y = []
     for element in data:
@@ -34,7 +35,9 @@ def Reduce(dataMax, dataMin, data):
     return (dataReduced)
 
 def DescentGradient(dataReduced, theta, learning, iterations):
+    """ Détermine les theta pour avoir la droite la plus juste"""
     i = 0
+    m = len(dataReduced)
     while i < iterations:
         tmpTheta = [0.0, 0.0]
         for data in dataReduced:
@@ -57,20 +60,23 @@ def Display(data, theta):
     plt.ylabel('Price ($)')
     plt.show()
 
-if __name__ == '__main__':
+def WriteTheta(theta):
+    """Ecrit les theta dans un fichier externe """
+    f = open("theta.txt", "w")
+    f.writelines( [str(theta[0]), "\n", str(theta[1]),  "\n"])
+    f.close()
 
+if __name__ == '__main__':
+    "" "Lis un jeu de données et détermine la droite de regression lineaire """
     data = GetData('data.csv')
     dataMax = max(data)
     dataMin = min(data)
-    m = len(data)
-    learning = 0.1
-    iterations = 20000
+    learning = 1
+    iterations = 10000
     theta = [0, 0]
     dataReduced = Reduce(dataMax, dataMin, data)
     theta = DescentGradient(dataReduced, theta, learning, iterations)
     theta[1] = (theta[1] / (dataMax[0] - dataMin[0]))
     print("y =", round(theta[0], 2), "* x", round(theta[1], 2))
-    f = open("theta.txt", "w")
-    f.writelines( [str(theta[0]), "\n", str(theta[1]),  "\n"])
-    f.close()
+    WriteTheta(theta)
     Display(data, theta)
