@@ -3,52 +3,74 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 def GetData(path):
-    """ Recuppere les data du csv et les insere dans des liste """
-    distance = []
-    prices = []
+    """Recuppere les data du csv et forme une lsite de couple (int,int)"""
+    dataConvert = []
     with open(path, 'r') as f:
         reader = csv.reader(f)
         data_csv = list(reader)
     data_csv.pop(0)
-    for element in data_csv:
-        distance.append(int(element[0]))
-        prices.append(int(element[1]))
-    return distance, prices
+    for data in data_csv:
+        dataConvert.append(list(map(int, data)))
+    return dataConvert
 
-def LinearRegression(x, y):
-    """ Détermine les theta de la fonction de la regression lineaire """
-    n = np.size(x)
-    # Creation des vecteurs x et y
-    vector_x, vector_y = np.mean(x), np.mean(y)
-    # Calcul la différence entre les vecteurs et et les nuages de point
-    SS_xy = np.sum(y*x) - n*vector_y*vector_x
-    SS_xx = np.sum(x*x) - n*vector_x*vector_x
-    # Détermine les coefficients de theta
-    theta_1 = SS_xy / SS_xx
-    theta_0 = vector_y - theta_1*vector_x
-    return(theta_0, theta_1)
+def GetAxes(data):
+    x = []
+    y = []
+    for element in data:
+        x.append(int(element[0]))
+        y.append(int(element[1]))
+    return x, y
 
-def Display(x, y, theta):
+def EstimatePrice(a, b, x):
+    """ Fonction qui représente la droite de la régression lineaire """
+    return (a * x + b)
+
+def Reduce(dataMax, dataMin, data):
+    """ Réduit les données en gardant les proportionnalité """
+    dataReduced = []
+    for data in data:
+        new = [(data[0] / (dataMax[0] - dataMin[0])), data[1]]
+        dataReduced.append(new)
+    return (dataReduced)
+
+def DescentGradient(dataReduced, theta, learning, iterations):
+    i = 0
+    while i < iterations:
+        tmpTheta = [0.0, 0.0]
+        for data in dataReduced:
+            cost = EstimatePrice(theta[1], theta[0], data[0]) - data[1]
+            tmpTheta[0] += cost
+            tmpTheta[1] += cost * data[0]
+        theta[0] = theta[0] - learning * (1 / m) * (tmpTheta[0] / m)
+        theta[1] = theta[1] - learning * (1 / m) * (tmpTheta[1] / m)
+        i += 1
+    return theta
+
+def Display(data, theta):
     """ Affiche le nuage de point et la droite de regression lineaire """
-    #Affiche les points
+    x, y = GetAxes(data)
+    x = np.array(x)
     plt.scatter(x, y)
-    # Definie la fonction de la regression lineaire
-    y_pred = theta[0] + theta[1]*x
-    # Affiche la droite de regression lineaire
-    plt.plot(x, y_pred, color = "g")
-    # Affiche les labels des axes
+    y = theta[0] + theta[1]*x
+    plt.plot(x, y, color = "g")
     plt.xlabel('Distance (miles)')
-    plt.ylabel('Prices ($)')
+    plt.ylabel('Price ($)')
     plt.show()
 
+if __name__ == '__main__':
 
-def main():
-    distance, prices = GetData("data.csv")
-    x = np.array(distance)
-    y = np.array(prices)
-    theta = LinearRegression(x, y)
-    print("Estimated coefficients:\nb_0 = {}\nb_1 = {}".format(theta[0], theta[1]))
-    Display(x, y, theta)
-
-if __name__ == "__main__":
-    main()
+    data = GetData('data.csv')
+    dataMax = max(data)
+    dataMin = min(data)
+    m = len(data)
+    learning = 0.1
+    iterations = 20000
+    theta = [0, 0]
+    dataReduced = Reduce(dataMax, dataMin, data)
+    theta = DescentGradient(dataReduced, theta, learning, iterations)
+    theta[1] = (theta[1] / (dataMax[0] - dataMin[0]))
+    print("y =", round(theta[0], 2), "* x", round(theta[1], 2))
+    f = open("theta.txt", "w")
+    f.writelines( [str(theta[0]), "\n", str(theta[1]),  "\n"])
+    f.close()
+    Display(data, theta)
